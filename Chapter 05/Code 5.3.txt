@@ -1,0 +1,5 @@
+import boto3
+
+glue = boto3.client('glue')
+response = glue.start_job_run(JobName='sales_daily_transform')
+print("Job started with ID:", response['JobRunId'])

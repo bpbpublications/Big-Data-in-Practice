@@ -1,0 +1,28 @@
+# pip install apache-flink==1.17.2
+
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.datastream.window import TumblingProcessingTimeWindows
+from pyflink.common.time import Time
+
+def main():
+env = StreamExecutionEnvironment.get_execution_environment()
+
+# Sample data stream
+stream = env.from_collection([
+    ("u1", 1),
+    ("u2", 2),
+    ("u1", 3)
+])
+
+# Tumbling window of 5 minutes, grouped by user ID
+(stream
+    .key_by(lambda x: x[0])
+    .window(TumblingProcessingTimeWindows.of(Time.minutes(5)))
+    .reduce(lambda a, b: (a[0], a[1] + b[1]))
+    .print()
+)
+
+env.execute("tumbling_window_example")
+
+if __name__ == "__main__":
+    main()

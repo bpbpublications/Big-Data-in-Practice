@@ -1,0 +1,43 @@
+# Install PySpark. In a real Spark environment you do not need this line.
+!pip install -q pyspark
+
+from pyspark.sql import SparkSession
+import time
+
+# Create SparkSession
+spark = (
+    SparkSession.builder
+        .appName("StructuredStreamingDemo")
+        .master("local[*]")
+        .getOrCreate()
+)
+
+# Reduce log noise
+spark.sparkContext.setLogLevel("WARN")
+
+# Streaming source that generates rows over time
+df = (
+    spark.readStream
+         .format("rate")
+         .option("rowsPerSecond", 5)
+         .load()
+)
+
+df = df.select("timestamp", "value")
+
+def process_batch(batch_df, batch_id):
+    print(f"\n=== Batch {batch_id} ===")
+    batch_df.show(5, truncate=False)   # show first 5 rows
+
+# Start query with a fixed trigger interval
+query = (
+    df.writeStream
+      .outputMode("append")
+      .foreachBatch(process_batch)
+      .trigger(processingTime="2 seconds")
+      .start()
+)
+
+# Let it run long enough to collect a few batches
+time.sleep(8)
+query.stop()

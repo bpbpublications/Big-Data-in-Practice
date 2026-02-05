@@ -1,0 +1,27 @@
+import apache_beam as beam
+from apache_beam.options.pipeline_options import PipelineOptions
+
+class ComputeFeatures(beam.DoFn):
+    def process(self, element):
+        customer_id, txns = element
+        amounts = [txn['amount'] for txn in txns]
+        avg_amt = sum(amounts) / len(amounts)
+        high_ratio = len([a for a in amounts if a > 1000]) / len(amounts)
+        yield {
+            'customer_id': customer_id,
+            'txn_count': len(txns),
+            'avg_amount': avg_amt,
+            'high_value_ratio': high_ratio
+        }
+
+options = PipelineOptions()
+with beam.Pipeline(options=options) as p:
+    (
+        p
+        | 'ReadData' >> beam.io.ReadFromText('gs://data/transactions.json')
+        | 'Parse' >> beam.Map(lambda x: eval(x))
+        | 'GroupByCustomer' >> beam.GroupBy(lambda x: x['customer_id'])
+        | 'ComputeFeatures' >> beam.ParDo(ComputeFeatures())
+        | 'WriteOutput' >> beam.io.WriteToText('gs://data/features.txt')
+    )
+

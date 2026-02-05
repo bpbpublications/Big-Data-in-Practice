@@ -1,0 +1,39 @@
+#	Mapper:
+import re
+
+text = "Hello world hello\n"
+
+def mapper(text):
+    """Return list of 'word\t1' lines."""
+    out = []
+    for line in text.splitlines():
+        for word in re.findall(r"[A-Za-z']+", line):
+            out.append(f"{word.lower()}\t1")
+    return out
+
+#	Reducer:
+def reducer(mapped_lines):
+    """Take sorted mapper output and print word counts."""
+    mapped_lines = sorted(mapped_lines)
+
+    current = None
+    total = 0
+
+    for line in mapped_lines:
+        word, count = line.strip().split("\t")
+        count = int(count)
+
+        if word == current:
+            total += count
+        else:
+            if current:
+                print(f"{current}\t{total}")
+            current, total = word, count
+
+    if current:
+        print(f"{current}\t{total}")
+
+#	Execution
+mapped = mapper(text)
+reducer(mapped)
+

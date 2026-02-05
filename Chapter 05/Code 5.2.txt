@@ -1,0 +1,34 @@
+import boto3
+emr = boto3.client('emr')
+response = emr.run_job_flow(
+    Name='Daily-Sales-Processing',
+    ReleaseLabel='emr-7.0.0',
+    Instances={
+        'InstanceCount': 3,
+        'KeepJobFlowAliveWhenNoSteps': False,
+        'InstanceGroups': [
+            {
+                'Name': 'Core nodes',
+                'Market': 'ON_DEMAND',
+                'InstanceRole': 'CORE',
+                'InstanceType': 'm5.xlarge',
+                'InstanceCount': 2
+            }
+        ]
+    },
+    Steps=[
+        {
+            'Name': 'Spark Step',
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': ['spark-submit', 's3://scripts/sales_etl.py']
+            }
+        }
+    ],
+    VisibleToAllUsers=True,
+    JobFlowRole='EMR_EC2_DefaultRole',
+    ServiceRole='EMR_DefaultRole'
+)
+print("Cluster started with ID:", response['JobFlowId'])
+

@@ -1,0 +1,33 @@
+transactions = [
+    {"id": 1, "amount": 25, "location": "TX", "device": "D1"},
+    {"id": 2, "amount": 2200, "location": "TX", "device": "D1"},
+    {"id": 3, "amount": 90, "location": "CA", "device": "D1"},
+    {"id": 4, "amount": 130, "location": "CA", "device": "D2"},
+    {"id": 5, "amount": 800, "location": "NV", "device": "D2"},
+]
+
+
+def score_transaction(t):
+    score = 0
+    if t["amount"] > 1000:
+        score += 2
+    if t["location"] not in ["TX", "CA"]:
+        score += 1
+    if t["device"] not in ["D1", "D2"]:
+        score += 1
+    return score
+
+
+
+def classify(score):
+    if score == 0:
+        return "allow"
+    if score == 1 or score == 2:
+        return "review"
+    return "block"
+
+
+for t in transactions:
+    s = score_transaction(t)
+    action = classify(s)
+    print(f"Transaction {t['id']} -> Score: {s}, Decision: {action}")

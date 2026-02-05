@@ -1,0 +1,34 @@
+interactions = [
+    {"user": 1, "product": "P1", "score": 1.0},   # view
+    {"user": 1, "product": "P2", "score": 2.0},   # click
+    {"user": 1, "product": "P3", "score": 3.0},   # purchase
+    {"user": 2, "product": "P2", "score": 1.0},
+    {"user": 2, "product": "P4", "score": 3.0},
+    {"user": 3, "product": "P1", "score": 2.0},
+    {"user": 3, "product": "P5", "score": 3.0},
+]
+
+
+def build_preferences(interactions):
+    prefs = {}
+    for r in interactions:
+        prefs.setdefault(r["user"], {})
+        prefs[r["user"]][r["product"]] = prefs[r["user"]].get(r["product"], 0) + r["score"]
+    return prefs
+
+
+def similarity(p1, p2):
+    return 1 if p1[0] == p2[0] else 0
+
+
+def recommend(user, prefs, N=2):
+    viewed = prefs[user].keys()
+    all_products = {"P1", "P2", "P3", "P4", "P5"}
+    candidates = all_products - set(viewed)
+    scored = [(p, sum(similarity(p, v) for v in viewed)) for p in candidates]
+    ranked = sorted(scored, key=lambda x: x[1], reverse=True)
+    return ranked[:N]
+
+prefs = build_preferences(interactions)
+for u in prefs:
+    print(f"User {u} -> Recommendations: {recommend(u, prefs)}")

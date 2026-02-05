@@ -1,0 +1,48 @@
+# pip install apache-flink==1.17.2
+
+from datetime import timedelta
+from pyflink.datastream import StreamExecutionEnvironment
+from pyflink.datastream.window import TumblingEventTimeWindows
+from pyflink.common import Row
+from pyflink.common.time import Time
+from pyflink.common.watermark_strategy import WatermarkStrategy
+
+def main():
+    env = StreamExecutionEnvironment.get_execution_environment()
+
+    # Sample stream: (sensor_id, timestamp_millis, temperature)
+    readings = env.from_collection([
+        Row("sensor_1", 0,          22.5),
+        Row("sensor_1", 20_000,     23.0),
+        Row("sensor_1", 40_000,     21.5),
+        Row("sensor_2", 10_000,     25.2),
+        Row("sensor_2", 50_000,     26.0)
+    ])
+
+    # Assign event-time and watermarks (allow 30 sec lateness)
+    wm = (
+        WatermarkStrategy
+        .for_bounded_out_of_orderness(timedelta(seconds=30))
+        .with_timestamp_assigner(lambda e, ts: e[1])
+    )
+
+    # Compute average temperature per sensor in 1-min tumbling window
+    (
+        readings
+        .assign_timestamps_and_watermarks(wm)
+        .key_by(lambda e: e[0])  # group by sensor_id
+        .window(TumblingEventTimeWindows.of(Time.minutes(1)))
+        .reduce(
+            # accumulator: (sensor_id, timestamp, temp_sum, count)
+            lambda a, b: Row(a[0], max(a[1], b[1]), a[2] + b[2]),
+            # optional aggregate example could be expanded
+        )
+        .map(lambda e: f"Sensor={e[0]}, AvgTemp={round(e[2]/3, 2)}, LastTs={e[1]}")  # quick demo output
+        .print()
+    )
+
+    env.execute("sensor_average_temperature")
+
+if __name__ == "__main__":
+    main()
+

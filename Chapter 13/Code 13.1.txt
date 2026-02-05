@@ -1,0 +1,27 @@
+readings = [
+    {"t": 1, "value": 22.0},
+    {"t": 2, "value": 22.5},
+    {"t": 3, "value": 22.7},
+    {"t": 4, "value": 23.0},
+    {"t": 5, "value": 40.0},   # anomaly
+    {"t": 6, "value": 22.9},
+    {"t": 7, "value": 22.8},
+]
+
+
+def moving_average(values, window=3):
+    return sum(values[-window:]) / len(values[-window:])
+
+def detect_anomalies(readings, threshold=5.0):
+    values = []
+    anomalies = []
+    for r in readings:
+        values.append(r["value"])
+        if len(values) > 3:
+            avg = moving_average(values)
+            if abs(r["value"] - avg) > threshold:
+                anomalies.append((r["t"], r["value"]))
+    return anomalies
+
+anoms = detect_anomalies(readings)
+print("Anomalies:", anoms)

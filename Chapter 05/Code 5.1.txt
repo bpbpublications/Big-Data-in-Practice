@@ -1,0 +1,7 @@
+import boto3
+
+s3 = boto3.client('s3')
+file_path = "data/transactions_2026.csv"
+bucket_name = "finance-raw-zone"
+s3.upload_file(file_path, bucket_name, "2026/01/transactions.csv") #file should be at this path
+print("Upload complete.")

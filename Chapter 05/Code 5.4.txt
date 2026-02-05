@@ -1,0 +1,7 @@
+import apache_beam as beam
+
+with beam.Pipeline() as p:
+    (p 
+     | 'Read' >> beam.io.ReadFromText('gs://data/input.txt')
+     | 'Transform' >> beam.Map(lambda x: x.upper())
+     | 'Write' >> beam.io.WriteToText('gs://data/output.txt'))

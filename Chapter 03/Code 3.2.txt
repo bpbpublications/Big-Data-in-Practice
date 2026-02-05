@@ -1,0 +1,31 @@
+# Install PySpark in Colab
+!pip install pyspark
+
+from pyspark import SparkContext
+
+# Create a SparkContext
+sc = SparkContext.getOrCreate()
+
+# Create an RDD from a Python list
+data = [1, 2, 3, 4, 5]
+rdd = sc.parallelize(data)
+
+print("Original RDD:")
+print(rdd.collect())
+
+# Apply transformations
+rdd_mapped = rdd.map(lambda x: x * 2)
+rdd_filtered = rdd_mapped.filter(lambda x: x > 5)
+
+print("After map (x * 2):")
+print(rdd_mapped.collect())
+
+print("After filter (values > 5):")
+print(rdd_filtered.collect())
+
+# Apply an action
+sum_value = rdd_filtered.reduce(lambda a, b: a + b)
+print("Sum of filtered elements:", sum_value)
+
+# Stop the context if needed
+sc.stop()

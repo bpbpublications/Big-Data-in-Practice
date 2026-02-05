@@ -1,0 +1,19 @@
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, avg, count, when, window
+
+spark = SparkSession.builder.appName("FeatureEngineering").getOrCreate()
+
+# Load transaction data
+df = spark.read.parquet("s3://data/transactions/")
+
+# Compute rolling metrics
+features = (
+    df.groupBy("customer_id", window("timestamp", "7 days"))
+      .agg(
+          count("*").alias("txn_count"),
+          avg("amount").alias("avg_amount"),
+          avg(when(col("amount") > 1000, 1).otherwise(0)).alias("high_value_ratio")
+      )
+)
+
+features.write.mode("overwrite").parquet("s3://data/features/")
